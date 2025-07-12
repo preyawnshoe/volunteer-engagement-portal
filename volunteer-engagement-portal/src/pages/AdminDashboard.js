@@ -19,9 +19,9 @@ const AdminDashboard = () => {
     const role = localStorage.getItem('role');
     
     // Redirect to login if not an organizer
-    if (role !== 'organizer') {
-      navigate('/login');
-    }
+    // if (role !== 'organizer') {
+    //   navigate('/login');
+    // }
     
     // Fetch volunteers and shifts (mock data for now)
     fetchVolunteers();
