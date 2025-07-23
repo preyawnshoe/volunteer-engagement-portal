@@ -9,6 +9,7 @@ import logo from "images/logo.svg";
 import googleIconImageSrc from "images/google-icon.png";
 import twitterIconImageSrc from "images/twitter-icon.png";
 import { ReactComponent as LoginIcon } from "feather-icons/dist/icons/log-in.svg";
+import { useState } from 'react';
 
 const Container = tw(ContainerBase)`min-h-screen bg-primary-900 text-white font-medium flex justify-center -m-8`;
 const Content = tw.div`max-w-screen-xl m-0 sm:mx-20 sm:my-16 bg-white text-gray-900 shadow sm:rounded-lg flex justify-center flex-1`;
@@ -83,6 +84,35 @@ export default ({
 
 }) => {
   const [userType, setUserType] = React.useState('volunteer');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
+      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      window.location.href = userType === 'volunteer' ? '/volunteer/dashboard' : userType === 'ngo' ? '/ngo/dashboard' : '/admin/dashboard';
+    } catch (err) {
+      setError('Server error');
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimationRevealPage>
@@ -135,13 +165,14 @@ export default ({
                 <DividerTextContainer>
                   <DividerText>Or sign in with your email</DividerText>
                 </DividerTextContainer>
-                <Form>
-                  <Input type="email" placeholder="Email Address" />
-                  <Input type="password" placeholder="Password" />
-                  <SubmitButton type="submit">
+                <Form onSubmit={handleSubmit}>
+                  <Input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
+                  <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                  <SubmitButton type="submit" disabled={loading}>
                     <SubmitButtonIcon className="icon" />
-                    <span className="text">{submitButtonText}</span>
+                    <span className="text">{loading ? 'Signing In...' : submitButtonText}</span>
                   </SubmitButton>
+                  {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
                 </Form>
                 <p tw="mt-6 text-xs text-gray-600 text-center">
                   <a href={forgotPasswordUrl} tw="border-b border-gray-500 border-dotted">

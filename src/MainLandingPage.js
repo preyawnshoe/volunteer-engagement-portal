@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import tw from "twin.macro";
 import AnimationRevealPage from "helpers/AnimationRevealPage.js";
@@ -39,6 +39,14 @@ const StatCard = tw.div`text-center`;
 const StatNumber = tw.div`text-4xl lg:text-5xl font-bold text-primary-500 mb-2`;
 const StatLabel = tw.div`text-gray-600 font-medium`;
 
+const LeaderboardContainer = tw.div`max-w-screen-xl mx-auto py-12`;
+const LeaderboardHeading = tw.h2`font-bold text-3xl md:text-4xl text-center text-primary-500 mb-6`;
+const LeaderboardTable = tw.table`w-full bg-white rounded-lg shadow-lg overflow-hidden`;
+const LeaderboardHeader = tw.thead`bg-primary-500 text-white`;
+const LeaderboardRow = tw.tr``;
+const LeaderboardCell = tw.td`py-4 px-6 text-center border-b`;
+const LeaderboardTh = tw.th`py-4 px-6 text-center`;
+
 const CTAContainer = tw.div`bg-primary-500 py-20 lg:py-24`;
 const CTAContent = tw.div`max-w-screen-xl mx-auto text-center`;
 const CTAHeading = tw.h2`font-bold text-3xl md:text-4xl lg:text-5xl text-white leading-tight`;
@@ -46,6 +54,38 @@ const CTAParagraph = tw.p`mt-4 text-xl text-white opacity-75`;
 const CTAButton = tw.button`mt-8 font-bold px-8 lg:px-10 py-3 lg:py-4 bg-white text-primary-500 rounded-lg transition duration-300 transform focus:outline-none focus:shadow-outline hover:scale-105 hover:shadow-lg`;
 
 const MainLandingPage = () => {
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const response = await fetch("http://localhost:5000/api/leaderboard");
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.message || "Failed to fetch leaderboard");
+          setLoading(false);
+          return;
+        }
+        setLeaderboard(data);
+        setLoading(false);
+      } catch (err) {
+        setError("Server error");
+        setLoading(false);
+      }
+    };
+    fetchLeaderboard();
+  }, []);
+
+  // Helper to preserve referral code in URL if present
+  const getSignupUrl = () => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    return ref ? `/signup?ref=${ref}` : '/signup';
+  };
 
   return (
     <AnimationRevealPage>
@@ -67,7 +107,7 @@ const MainLandingPage = () => {
               <Actions>
                 <PrimaryButton 
                   tw="bg-primary-500 hover:bg-primary-600"
-                  onClick={() => window.location.href = '/volunteer/signup'}
+                  onClick={() => window.location.href = getSignupUrl()}
                 >
                   Join as Volunteer
                 </PrimaryButton>
@@ -171,6 +211,41 @@ const MainLandingPage = () => {
           </StatCard>
         </StatsGrid>
       </StatsContainer>
+
+      {/* Leaderboard Section */}
+      <LeaderboardContainer>
+        <LeaderboardHeading>Top Referrers Leaderboard</LeaderboardHeading>
+        {loading ? (
+          <div tw="text-center text-gray-600">Loading...</div>
+        ) : error ? (
+          <div tw="text-center text-red-500">{error}</div>
+        ) : (
+          <LeaderboardTable>
+            <LeaderboardHeader>
+              <LeaderboardRow>
+                <LeaderboardTh>Rank</LeaderboardTh>
+                <LeaderboardTh>Name</LeaderboardTh>
+                <LeaderboardTh>Referrals</LeaderboardTh>
+              </LeaderboardRow>
+            </LeaderboardHeader>
+            <tbody>
+              {leaderboard.length === 0 ? (
+                <LeaderboardRow>
+                  <LeaderboardCell colSpan={3}>No data available.</LeaderboardCell>
+                </LeaderboardRow>
+              ) : (
+                leaderboard.map((user, idx) => (
+                  <LeaderboardRow key={user.referralCode}>
+                    <LeaderboardCell>{idx + 1}</LeaderboardCell>
+                    <LeaderboardCell>{user.name}</LeaderboardCell>
+                    <LeaderboardCell>{user.shareCount}</LeaderboardCell>
+                  </LeaderboardRow>
+                ))
+              )}
+            </tbody>
+          </LeaderboardTable>
+        )}
+      </LeaderboardContainer>
 
       <CTAContainer>
         <CTAContent>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import tw from "twin.macro";
 
@@ -33,6 +33,52 @@ const Badge = styled.span`
 
 const VolunteerDashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Not authenticated.');
+          setLoading(false);
+          return;
+        }
+        const response = await fetch('http://localhost:5000/api/user/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.message || 'Failed to fetch profile');
+          setLoading(false);
+          return;
+        }
+        setUser(data);
+        setLoading(false);
+      } catch (err) {
+        setError('Server error');
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleCopyReferral = () => {
+    if (user && user.referralCode) {
+      const url = `${window.location.origin}/signup?ref=${user.referralCode}`;
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
   // Mock volunteer data
   const volunteerData = {
@@ -169,12 +215,28 @@ const VolunteerDashboardPage = () => {
           <div tw="text-center mb-4">
             <div tw="w-24 h-24 bg-primary-500 rounded-full mx-auto mb-4 flex items-center justify-center">
               <span tw="text-white text-2xl font-bold">
-                {volunteerData.name.split(' ').map(n => n[0]).join('')}
+                {user.name.split(' ').map(n => n[0]).join('')}
               </span>
             </div>
-            <h3 tw="text-xl font-bold">{volunteerData.name}</h3>
-            <p tw="text-gray-600">{volunteerData.email}</p>
-            <p tw="text-gray-600">{volunteerData.location}</p>
+            <h3 tw="text-xl font-bold">{user.name}</h3>
+            <p tw="text-gray-600">{user.email}</p>
+            {user.location && <p tw="text-gray-600">{user.location}</p>}
+          </div>
+          <div tw="border-t pt-4">
+            <h4 tw="font-semibold mb-2">Referral Link</h4>
+            <div tw="flex items-center mb-2">
+              <input
+                type="text"
+                value={`${window.location.origin}/signup?ref=${user.referralCode}`}
+                readOnly
+                style={{ flex: 1, marginRight: 8, padding: 4, borderRadius: 4, border: '1px solid #ddd' }}
+              />
+              <PrimaryButton onClick={handleCopyReferral} type="button">
+                {copied ? 'Copied!' : 'Copy'}
+              </PrimaryButton>
+            </div>
+            <div tw="text-xs text-gray-500 mb-2">Share this link to invite others and increase your referral count!</div>
+            <div tw="text-sm font-medium">Your Referrals: <span tw="text-primary-500">{user.shareCount || 0}</span></div>
           </div>
           
           <div tw="border-t pt-4">
@@ -198,15 +260,15 @@ const VolunteerDashboardPage = () => {
         <div tw="lg:col-span-2">
           <StatsGrid>
             <StatCard>
-              <StatNumber>{volunteerData.totalHours}</StatNumber>
+              <StatNumber>{user.totalHours || 0}</StatNumber>
               <StatLabel>Total Hours</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>{volunteerData.totalActivities}</StatNumber>
+              <StatNumber>{user.totalActivities || 0}</StatNumber>
               <StatLabel>Activities Completed</StatLabel>
             </StatCard>
             <StatCard>
-              <StatNumber>{volunteerData.rating}</StatNumber>
+              <StatNumber>{user.rating || '-'}</StatNumber>
               <StatLabel>Average Rating</StatLabel>
             </StatCard>
             <StatCard>
@@ -316,35 +378,21 @@ const VolunteerDashboardPage = () => {
               <label tw="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
               <input 
                 type="text" 
-                value={volunteerData.name}
+                value={user.name}
                 tw="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                readOnly
               />
             </div>
             <div>
               <label tw="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input 
                 type="email" 
-                value={volunteerData.email}
+                value={user.email}
                 tw="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                readOnly
               />
             </div>
-            <div>
-              <label tw="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <input 
-                type="tel" 
-                value={volunteerData.phone}
-                tw="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <div>
-              <label tw="block text-sm font-medium text-gray-700 mb-1">Location</label>
-              <input 
-                type="text" 
-                value={volunteerData.location}
-                tw="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-            <PrimaryButton>Update Profile</PrimaryButton>
+            {/* Add more fields as needed */}
           </div>
         </Card>
       </Section>
@@ -411,7 +459,7 @@ const VolunteerDashboardPage = () => {
           <DashboardContainer>
             <div tw="mb-8">
               <h1 tw="text-4xl font-bold text-gray-800 mb-4">Volunteer Dashboard</h1>
-              <p tw="text-gray-600">Welcome back, {volunteerData.name}! Here's your volunteering overview.</p>
+              <p tw="text-gray-600">Welcome back, {user.name}! Here's your volunteering overview.</p>
             </div>
 
             {/* Navigation Tabs */}

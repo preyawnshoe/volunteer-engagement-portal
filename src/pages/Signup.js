@@ -9,6 +9,8 @@ import logo from "images/logo.svg";
 import googleIconImageSrc from "images/google-icon.png";
 import twitterIconImageSrc from "images/twitter-icon.png";
 import { ReactComponent as SignUpIcon } from "feather-icons/dist/icons/user-plus.svg";
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const Container = tw(ContainerBase)`min-h-screen bg-primary-900 text-white font-medium flex justify-center -m-8`;
 const Content = tw.div`max-w-screen-xl m-0 sm:mx-20 sm:my-16 bg-white text-gray-900 shadow sm:rounded-lg flex justify-center flex-1`;
@@ -84,6 +86,23 @@ export default ({
   signInUrl = "/login"
 }) => {
   const [userType, setUserType] = React.useState('volunteer');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+
+  const location = useLocation();
+
+  useEffect(() => {
+    // Always read the referral code from the URL on every render
+    const params = new URLSearchParams(location.search);
+    const ref = params.get('ref');
+    setReferralCode(ref || '');
+  }, [location.search]);
 
   const getSubheading = () => {
     switch(userType) {
@@ -111,6 +130,40 @@ export default ({
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+    if (!name || !email || !password) {
+      setError('All fields are required.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, userType, referralCode: referralCode || undefined })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        setError(data.message || 'Signup failed');
+        setLoading(false);
+        return;
+      }
+      setSuccess(true);
+      setLoading(false);
+      window.location.href = '/login';
+    } catch (err) {
+      setError('Server error');
+      setLoading(false);
+    }
+  };
+
   return (
     <AnimationRevealPage>
       <Container>
@@ -122,6 +175,12 @@ export default ({
             <MainContent>
               <Heading>{headingText}</Heading>
               <Subheading>{getSubheading()}</Subheading>
+              {/* Debug: Show referral code if present */}
+              {referralCode && (
+                <div style={{ color: 'green', marginBottom: 8 }}>
+                  Using Referral Code: <b>{referralCode}</b>
+                </div>
+              )}
               <FormContainer>
                 <UserTypeSelector>
                   <UserTypeButton 
@@ -157,11 +216,11 @@ export default ({
                 <DividerTextContainer>
                   <DividerText>Or sign up with your email</DividerText>
                 </DividerTextContainer>
-                <Form>
-                  <Input type="text" placeholder="Full Name" />
-                  <Input type="email" placeholder="Email Address" />
-                  <Input type="password" placeholder="Password" />
-                  <Input type="password" placeholder="Confirm Password" />
+                <Form onSubmit={handleSubmit}>
+                  <Input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} required />
+                  <Input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} required />
+                  <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
+                  <Input type="password" placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
                   
                   {userType === 'ngo' && (
                     <>
@@ -179,10 +238,12 @@ export default ({
                     </>
                   )}
 
-                  <SubmitButton type="submit">
+                  <SubmitButton type="submit" disabled={loading}>
                     <SubmitButtonIcon className="icon" />
-                    <span className="text">{getSubmitButtonText()}</span>
+                    <span className="text">{loading ? 'Creating Account...' : getSubmitButtonText()}</span>
                   </SubmitButton>
+                  {error && <div style={{ color: 'red', marginTop: 8 }}>{error}</div>}
+                  {success && <div style={{ color: 'green', marginTop: 8 }}>Signup successful! Redirecting to login...</div>}
                   
                   <p tw="mt-6 text-xs text-gray-600 text-center">
                     By creating an account, you agree to our{" "}
