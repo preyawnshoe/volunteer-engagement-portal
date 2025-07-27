@@ -3,7 +3,7 @@ import AnimationRevealPage from "helpers/AnimationRevealPage.js";
 import tw from "twin.macro";
 import styled from "styled-components"; //eslint-disable-line
 import { css } from "styled-components/macro"; //eslint-disable-line
-import Header from "components/headers/light.js";
+import Header from "components/headers/authenticated.js";
 import Footer from "components/footers/FiveColumnWithBackground.js";
 import MainFeature1 from "components/features/TwoColWithButton.js";
 import Features from "components/features/ThreeColSimple.js";

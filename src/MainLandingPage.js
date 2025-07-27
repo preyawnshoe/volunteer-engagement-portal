@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import tw from "twin.macro";
 import AnimationRevealPage from "helpers/AnimationRevealPage.js";
-import Header from "components/headers/light.js";
+import Header from "components/headers/authenticated.js";
 import Footer from "components/footers/FiveColumnWithBackground.js";
 import { ReactComponent as SvgDotPatternIcon } from "./images/dot-pattern.svg";
 

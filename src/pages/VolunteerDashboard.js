@@ -3,7 +3,7 @@ import styled from "styled-components";
 import tw from "twin.macro";
 
 import AnimationRevealPage from "helpers/AnimationRevealPage.js";
-import Header from "components/headers/light.js";
+import Header from "components/headers/authenticated.js";
 import Footer from "components/footers/FiveColumnWithBackground.js";
 
 const Container = tw.div`relative`;
@@ -75,6 +75,13 @@ const VolunteerDashboardPage = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('tempUserData');
+    window.location.href = '/';
   };
 
   if (loading) return <div>Loading...</div>;
@@ -458,8 +465,20 @@ const VolunteerDashboardPage = () => {
         <Content>
           <DashboardContainer>
             <div tw="mb-8">
-              <h1 tw="text-4xl font-bold text-gray-800 mb-4">Volunteer Dashboard</h1>
-              <p tw="text-gray-600">Welcome back, {user.name}! Here's your volunteering overview.</p>
+              <div tw="flex justify-between items-start mb-4">
+                <div>
+                  <h1 tw="text-4xl font-bold text-gray-800 mb-4">Volunteer Dashboard</h1>
+                  <p tw="text-gray-600">Welcome back, {user.name}! Here's your volunteering overview.</p>
+                </div>
+                <div tw="flex space-x-3">
+                  <PrimaryButton onClick={() => window.location.href = '/volunteer/profile'}>
+                    View Full Profile
+                  </PrimaryButton>
+                  <SecondaryButton onClick={handleLogout}>
+                    Logout
+                  </SecondaryButton>
+                </div>
+              </div>
             </div>
 
             {/* Navigation Tabs */}

@@ -12,6 +12,7 @@ import NGORegistrationPage from "pages/NGORegistration.js";
 import ActivityCreationPage from "pages/ActivityCreation.js";
 import AdminDashboardPage from "pages/AdminDashboard.js";
 import VolunteerDashboardPage from "pages/VolunteerDashboard.js";
+import VolunteerProfilePage from "pages/VolunteerProfile.js";
 import NGODashboardPage from "pages/NGODashboard.js";
 
 // Additional System Pages
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="/ngo/activity/create" element={<ActivityCreationPage />} />
           <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
           <Route path="/volunteer/dashboard" element={<VolunteerDashboardPage />} />
+          <Route path="/volunteer/profile" element={<VolunteerProfilePage />} />
           <Route path="/ngo/dashboard" element={<NGODashboardPage />} />
           
           {/* Additional System Pages */}

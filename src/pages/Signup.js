@@ -90,6 +90,8 @@ export default ({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [city, setCity] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -157,7 +159,22 @@ export default ({
       }
       setSuccess(true);
       setLoading(false);
-      window.location.href = '/login';
+      
+      // Store user data for pre-filling volunteer form
+      if (userType === 'volunteer') {
+        localStorage.setItem('tempUserData', JSON.stringify({
+          name,
+          email,
+          phone,
+          city,
+          userType
+        }));
+        // For volunteers, redirect to detailed signup page
+        window.location.href = '/volunteer/signup';
+      } else {
+        // For NGOs and admins, redirect to login
+        window.location.href = '/login';
+      }
     } catch (err) {
       setError('Server error');
       setLoading(false);
@@ -232,8 +249,8 @@ export default ({
                   
                   {userType === 'volunteer' && (
                     <>
-                      <Input type="text" placeholder="Phone Number" />
-                      <Input type="text" placeholder="City/Location" />
+                      <Input type="text" placeholder="Phone Number" value={phone} onChange={e => setPhone(e.target.value)} />
+                      <Input type="text" placeholder="City/Location" value={city} onChange={e => setCity(e.target.value)} />
                       <TextArea rows="2" placeholder="What causes are you passionate about? (optional)" />
                     </>
                   )}

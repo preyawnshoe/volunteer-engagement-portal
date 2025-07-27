@@ -3,7 +3,7 @@ import styled from "styled-components";
 import tw from "twin.macro";
 
 import AnimationRevealPage from "helpers/AnimationRevealPage.js";
-import Header from "components/headers/light.js";
+import Header from "components/headers/authenticated.js";
 import Footer from "components/footers/FiveColumnWithBackground.js";
 
 const Container = tw.div`relative`;
